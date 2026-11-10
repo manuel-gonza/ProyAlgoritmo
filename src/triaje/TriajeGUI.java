@@ -12,7 +12,9 @@ import javax.swing.*;
  * Interfaz gráfica simple con Swing.
  *
  * Componentes principales:
- *   • Campos de texto para Nombre, Edad, Motivo, Prioridad.
+ *   • Lista para el tipo de documento (DNI, carné de extranjería o pasaporte).
+ *   • Campos de texto para Documento, Apellidos, Nombres, Edad, Motivo.
+ *   • Lista para la Prioridad (del 1 al 5).
  *   • Botón "Agregar Paciente" → enqueue().
  *   • Botón "Atender Paciente" → dequeue().
  *   • Área de texto (JTextArea) para mostrar la fila.
@@ -22,10 +24,13 @@ import javax.swing.*;
 public class TriajeGUI extends JFrame {
 
     // ---------- UI ----------
-    private JTextField tfNombre;
+    private JComboBox<String> cbTipoDocumento;
+    private JTextField tfDocumento;
+    private JTextField tfApellidos;
+    private JTextField tfNombres;
     private JTextField tfEdad;
     private JTextField tfMotivo;
-    private JTextField tfPrioridad;
+    private JComboBox<Integer> cbPrioridad;
     private JTextArea taSalida;
     private JButton btnAgregar;
     private JButton btnAtender;
@@ -38,7 +43,7 @@ public class TriajeGUI extends JFrame {
         super("Sistema de Triaje Médico – GUI");
         initComponents();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(500, 400);
+        setSize(520, 600);
         setLocationRelativeTo(null);   // centrado en pantalla
         setVisible(true);
     }
@@ -51,33 +56,56 @@ public class TriajeGUI extends JFrame {
         gbc.insets = new Insets(4,4,4,4);
         gbc.anchor = GridBagConstraints.WEST;
 
-        // --- fila 0: Nombre ---
+        // --- fila 0: Tipo de documento ---
         gbc.gridx = 0; gbc.gridy = 0;
-        panelDatos.add(new JLabel("Nombre:"), gbc);
-        tfNombre = new JTextField(15);
+        panelDatos.add(new JLabel("Tipo de documento:"), gbc);
+        cbTipoDocumento = new JComboBox<>(new String[] {
+            Paciente.DNI, Paciente.CARNE_EXTRANJERIA, Paciente.PASAPORTE
+        });
         gbc.gridx = 1;
-        panelDatos.add(tfNombre, gbc);
+        panelDatos.add(cbTipoDocumento, gbc);
 
-        // --- fila 1: Edad ---
+        // --- fila 1: Número de documento ---
         gbc.gridx = 0; gbc.gridy = 1;
+        panelDatos.add(new JLabel("N° de documento:"), gbc);
+        tfDocumento = new JTextField(15);
+        gbc.gridx = 1;
+        panelDatos.add(tfDocumento, gbc);
+
+        // --- fila 2: Apellidos ---
+        gbc.gridx = 0; gbc.gridy = 2;
+        panelDatos.add(new JLabel("Apellidos:"), gbc);
+        tfApellidos = new JTextField(20);
+        gbc.gridx = 1;
+        panelDatos.add(tfApellidos, gbc);
+
+        // --- fila 3: Nombres ---
+        gbc.gridx = 0; gbc.gridy = 3;
+        panelDatos.add(new JLabel("Nombres:"), gbc);
+        tfNombres = new JTextField(20);
+        gbc.gridx = 1;
+        panelDatos.add(tfNombres, gbc);
+
+        // --- fila 4: Edad ---
+        gbc.gridx = 0; gbc.gridy = 4;
         panelDatos.add(new JLabel("Edad:"), gbc);
         tfEdad = new JTextField(5);
         gbc.gridx = 1;
         panelDatos.add(tfEdad, gbc);
 
-        // --- fila 2: Motivo ---
-        gbc.gridx = 0; gbc.gridy = 2;
+        // --- fila 5: Motivo ---
+        gbc.gridx = 0; gbc.gridy = 5;
         panelDatos.add(new JLabel("Motivo:"), gbc);
         tfMotivo = new JTextField(20);
         gbc.gridx = 1;
         panelDatos.add(tfMotivo, gbc);
 
-        // --- fila 3: Prioridad ---
-        gbc.gridx = 0; gbc.gridy = 3;
-        panelDatos.add(new JLabel("Prioridad (1‑5):"), gbc);
-        tfPrioridad = new JTextField(3);
+        // --- fila 6: Prioridad ---
+        gbc.gridx = 0; gbc.gridy = 6;
+        panelDatos.add(new JLabel("Prioridad (1-5):"), gbc);
+        cbPrioridad = new JComboBox<>(new Integer[] {1, 2, 3, 4, 5});
         gbc.gridx = 1;
-        panelDatos.add(tfPrioridad, gbc);
+        panelDatos.add(cbPrioridad, gbc);
 
         // Botones
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
@@ -107,29 +135,55 @@ public class TriajeGUI extends JFrame {
 
     /** Acción del botón “Agregar Paciente”. */
     private void agregarPaciente() {
-        String nombre = tfNombre.getText().trim();
+        String tipoDocumento = (String) cbTipoDocumento.getSelectedItem();
+        String documento = tfDocumento.getText().trim();
+        String apellidos = tfApellidos.getText().trim();
+        String nombres = tfNombres.getText().trim();
         String edadStr = tfEdad.getText().trim();
         String motivo = tfMotivo.getText().trim();
-        String prioridadStr = tfPrioridad.getText().trim();
+        int prioridad = (Integer) cbPrioridad.getSelectedItem();
 
         // Validaciones básicas
-        if (nombre.isEmpty() || edadStr.isEmpty() || motivo.isEmpty() || prioridadStr.isEmpty()) {
+        if (documento.isEmpty() || apellidos.isEmpty() || nombres.isEmpty() || edadStr.isEmpty()
+                || motivo.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Debe completar todos los campos.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        int edad, prioridad;
+        // Validar el documento según su tipo
         try {
-            edad = Integer.parseInt(edadStr);
-            prioridad = Integer.parseInt(prioridadStr);
-            if (prioridad < 1 || prioridad > 5) throw new NumberFormatException();
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Edad debe ser un entero y Prioridad entre 1 y 5.", "Error", JOptionPane.ERROR_MESSAGE);
+            Paciente.validarDocumento(tipoDocumento, documento);
+        } catch (IllegalArgumentException ex) {
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            tfDocumento.requestFocus();
             return;
         }
 
-        Paciente p = new Paciente(nombre, edad, motivo, prioridad);
+        // Un mismo documento no puede estar dos veces en la fila
+        if (cola.existeDocumento(tipoDocumento, documento)) {
+            JOptionPane.showMessageDialog(this,
+                    "Ya hay un paciente en la fila con ese documento.", "Error", JOptionPane.ERROR_MESSAGE);
+            tfDocumento.requestFocus();
+            return;
+        }
+
+        int edad;
+        try {
+            edad = Integer.parseInt(edadStr);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "La edad debe ser un número entero.", "Error", JOptionPane.ERROR_MESSAGE);
+            tfEdad.requestFocus();
+            return;
+        }
+        if (edad < 0 || edad > 120) {
+            JOptionPane.showMessageDialog(this,
+                    "La edad debe estar entre 0 y 120.", "Error", JOptionPane.ERROR_MESSAGE);
+            tfEdad.requestFocus();
+            return;
+        }
+
+        Paciente p = new Paciente(tipoDocumento, documento, apellidos, nombres, edad, motivo, prioridad);
         cola.enqueue(p);
         JOptionPane.showMessageDialog(this, "Paciente agregado exitosamente.", "Info", JOptionPane.INFORMATION_MESSAGE);
         limpiarCampos();
@@ -156,10 +210,13 @@ public class TriajeGUI extends JFrame {
 
     /** Vacía los campos de texto después de agregar. */
     private void limpiarCampos() {
-        tfNombre.setText("");
+        cbTipoDocumento.setSelectedIndex(0);
+        tfDocumento.setText("");
+        tfApellidos.setText("");
+        tfNombres.setText("");
         tfEdad.setText("");
         tfMotivo.setText("");
-        tfPrioridad.setText("");
+        cbPrioridad.setSelectedIndex(0);
     }
 
     /** Punto de entrada del programa. */

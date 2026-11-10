@@ -73,6 +73,20 @@ public class ColaPrioridad {
         return sb.toString();
     }
 
+    /** Indica si ya hay un paciente en la fila con ese documento. */
+    public boolean existeDocumento(String tipoDocumento, String numeroDocumento) {
+        Nodo actual = cabeza;
+        while (actual != null) {
+            Paciente p = actual.datos;
+            if (p.getTipoDocumento().equals(tipoDocumento)
+                    && p.getNumeroDocumento().equalsIgnoreCase(numeroDocumento.trim())) {
+                return true;
+            }
+            actual = actual.siguiente;
+        }
+        return false;
+    }
+
     /** Indica si la cola está vacía. */
     public boolean estaVacia() {
         return cabeza == null;
